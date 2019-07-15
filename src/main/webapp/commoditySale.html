@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta content="telephone=no,email=no" name="format-detection">
+    <!--禁止自动识别电话号码和邮箱-->
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <!--苹果手机：会删除默认的工具栏和菜单栏，网站开启对web app程序的支持-->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <!--苹果手机：在web app应用下状态条（屏幕顶部条）的颜色,默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）。-->
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <!--苹果手机：如果把一个web app添加到了主屏幕中，那么从主屏幕中打开这个web app则全屏显示-->
+    <link rel="stylesheet" type="text/css" href="css/commoditySale.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/service.js"></script>
+    <script src="js/utils.js"></script>
+    <title></title>
+</head>
+<body>
+<div id="vueData">
+    <header>
+        <div class="title_header dis_flex">
+            <div class="dis_flex" @click="goBack">
+                <img src="img/return_2.png">
+            </div>
+            <div>
+                <span>商品销售详情</span>
+            </div>
+            <div></div>
+        </div>
+    </header>
+    <div class="body">
+        <div>
+            <div class="dis_flex Choice_list">
+                <div class="btn-group">
+                    <!--                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                                            类别：{{categoryName}}
+                                        </button>
+                                        <ul class="dropdown-menu" role="menu">
+                                            <li v-for="(item,index) in classify"><a href="#"
+                                                                                    @click="selCategory(item.id,item.category_name)">{{item.category_name}}</a>
+                                            </li>
+                                        </ul>-->
+                    <span>类别：</span>
+                    <select @click="selCategory">
+                        <option value="-1">请选择</option>
+                        <option v-for="(item,index) in classify" :value="index">{{item.category_name}}</option>
+                    </select>
+                </div>
+                <div>
+                    <span>商品销售总额：</span>
+                    <span>{{money}}</span>
+                </div>
+            </div>
+            <div class="dis_flex Choice_list">
+                <div>
+                    <span>开始时间：</span>
+                    <input type="date" v-model="startDate">
+                </div>
+            </div>
+            <div class="dis_flex Choice_list">
+                <div>
+                    <span>结束时间：</span>
+                    <input type="date" v-model="endDate">
+                </div>
+                <a href="javascript:" @click="querySale">查询</a>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div v-if="commodities.length==0"><span>没有记录</span></div>
+        <div v-else class="list_li dis_flex" v-for="commodity in commodities">
+            <div class="dis_flex">
+                <img :src="imagePath+commodity.picture">
+                <div class="dis_flex">
+                    <div class="dis_flex">
+                        <span>{{commodity.commodityName}}</span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="dis_flex">
+                <span>x{{commodity.number}}</span>
+            </div>
+        </div>
+    </footer>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    let localStore = JSON.parse(localStorage.localStore);
+    let pageIndex = 1, pageCount = 20, totalPage = 0;
+    let vm = new Vue({
+        el: '#vueData',
+        data: {
+            imagePath: '/yapingzh/picture/',
+            classify: [],
+            commodities: [],
+            categoryId: '',
+            startDate: '',
+            endDate: '',
+            money: 0
+        }, methods: {
+            selCategory(e) {
+                let index = e.target.value;
+                if (index > -1) {
+                    vm.categoryId = vm.classify[index].id;
+                }
+            }, querySale() {
+                emptyData();
+                querySaleAll();
+                loadCountmoney();
+            }, goBack() {
+                history.back();
+            }
+        }
+    });
+    $(function () {
+        getCommodityAllType(localStore.token, function (res) {
+            if (res.success) {
+                vm.classify = vm.classify.concat(res.result);
+            }
+        });
+        loadCountmoney();
+    });
+    function loadCountmoney() {
+        $.get('/shanduonewretail/jorder/countmoney', {
+            token: localStore.token,
+            categoryId: vm.categoryId === '' ? '' : vm.categoryId,
+            startDate: vm.startDate === '' ? '' : vm.startDate,
+            endDate: vm.endDate === '' ? '' : vm.endDate
+        }, function (res) {
+            if (res.success) {
+                vm.money = res.money;
+            }
+        });
+    }
+    function querySaleAll(cbOk, cbErr) {
+        $.ajax({
+            url: '/shanduonewretail/jorder/commodityList', data: {
+                token: localStore.token,
+                startDate: vm.startDate === '' ? '' : vm.startDate,
+                endDate: vm.endDate === '' ? '' : vm.endDate,
+                page: pageIndex,
+                pageSize: pageCount
+            }, success: function (res) {
+                if (res.success) {
+                    vm.commodities = vm.commodities.concat(res.data);
+                    totalPage = res.totalPage;
+                }
+                cbOk && cbOk();
+            }, error: function () {
+                cbErr && cbErr();
+            }
+        });
+    }
+    function emptyData() {
+        let ary = vm.commodities;
+        ary.splice(0, ary.length);
+        vm.commodities = ary;
+        pageIndex = 1;
+        totalPage = 0;
+    }
+</script>
+</html>

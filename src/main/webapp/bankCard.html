@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta content="telephone=no,email=no" name="format-detection">
+    <!--禁止自动识别电话号码和邮箱-->
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <!--苹果手机：会删除默认的工具栏和菜单栏，网站开启对web app程序的支持-->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <!--苹果手机：在web app应用下状态条（屏幕顶部条）的颜色,默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）。-->
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <!--苹果手机：如果把一个web app添加到了主屏幕中，那么从主屏幕中打开这个web app则全屏显示-->
+    <link rel="stylesheet" type="text/css" href="css/bankCard.css">
+    <title></title>
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/layer.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/service.js"></script>
+</head>
+<body>
+<div id="vueData">
+    <header>
+        <div class="title_header dis_flex">
+            <div></div>
+            <div>
+                <span>提现</span>
+            </div>
+            <div></div>
+        </div>
+    </header>
+    <div class="body">
+        <div class="dis_flex">
+            <div class="input_information">
+                <label for="name">姓名：</label>
+                <input type="text" id="name" v-model="info.name">
+            </div>
+            <div class="input_information">
+                <label for="bank">银行名称：</label>
+                <select v-model="bankIndex" id="bank" @change="selBank">
+                    <option value="-1">请选择</option>
+                    <option v-for="(item,index) in bankArray" :value="index">{{item.bankName}}</option>
+                </select>
+            </div>
+            <div class="input_information">
+                <label for="cardNumber">卡号：</label>
+                <input type="text" id="cardNumber" v-model="info.cardNumber">
+            </div>
+            <div class="input_information">
+                <label for="withdrawalAmount">提款金额：</label>
+                <input type="number" id="withdrawalAmount" :placeholder="hint" v-model="info.money">
+            </div>
+            <div class="putForward" @click="savepresent">
+                <span>立即提现</span>
+            </div>
+        </div>
+        <span>——&nbsp;&nbsp;&nbsp;到账时间三个工作日内&nbsp;&nbsp;&nbsp;——</span>
+    </div>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    let localStore = JSON.parse(localStorage.localStore);
+    let vm = new Vue({
+        el: '#vueData',
+        data: {
+            info: {
+                token: localStore.token,
+                money: 0,
+                name: '',
+                typeId: 2,
+                bankName: '',
+                openingBank: '',
+                cardNumber: ''
+            },
+            bankIndex: -1,
+            bankArray: [
+                {bankId: '1001', bankName: '招商银行'},
+                {bankId: '1002', bankName: '工商银行'},
+                {bankId: '1003', bankName: '建设银行'},
+                {bankId: '1004', bankName: '浦发银行'},
+                {bankId: '1005', bankName: '农业银行'},
+                {bankId: '1006', bankName: '民生银行'},
+                {bankId: '1009', bankName: '兴业银行'},
+                {bankId: '1010', bankName: '平安银行'},
+                {bankId: '1020', bankName: '交通银行'},
+                {bankId: '1021', bankName: '中信银行'},
+                {bankId: '1022', bankName: '光大银行'},
+                {bankId: '1025', bankName: '华夏银行'},
+                {bankId: '1026', bankName: '中国银行'},
+                {bankId: '1027', bankName: '广发银行'},
+                {bankId: '1032', bankName: '北京银行'},
+                {bankId: '1056', bankName: '宁波银行'},
+                {bankId: '1066', bankName: '邮储银行'},
+            ],
+            hint: 0
+        }, methods: {
+            savepresent() {
+                if (regInput()) {
+                    $.ajax({
+                        url: '/shanduonewretail/jpresent/savepresent',
+                        data: vm.info,
+                        success: function (res) {
+                            if (res.success) {
+                                toast('提现申请已受理');
+                                setTimeout(function () {
+                                    history.back();
+                                }, 2000);
+                            } else {
+                                toast(res.errCodeDes);
+                            }
+                        }
+                    });
+                }
+            }, selBank() {
+                vm.bankIndex = event.target.value;
+                if (vm.bankIndex > -1) {
+                    let bankInfo = vm.bankArray[vm.bankIndex];
+                    vm.info.bankName = bankInfo.bankId;
+                    vm.info.openingBank = bankInfo.bankName;
+                }
+            }
+        }
+    });
+
+    $(function () {
+        loadStoreDetail({
+            token: localStore.token,
+            typeId: 1
+        }, function (res) {
+            if (res.success) {
+                vm.hint = res.result.money;
+            }
+        });
+    });
+
+    function regInput() {
+        if (!checkInput(vm.info.name)) {
+            toast('请输入姓名');
+            return false;
+        }
+        if (!/^([\u4e00-\u9fa5]+)$/.test(vm.info.name)) {
+            toast('请使用中文名');
+            return false;
+        }
+        if (!checkInput(vm.info.bankName)) {
+            toast('请选择银行');
+            return false;
+        }
+        if (!checkInput(vm.info.cardNumber)) {
+            toast('请输入银行卡号');
+            return false;
+        }
+        if (vm.info.cardNumber.length < 16 || vm.info.cardNumber.length > 19) {
+            toast("银行卡号长度必须在16到19之间");
+            return false;
+        }
+        if (!/^\d*$/.exec(vm.info.cardNumber)) {
+            toast("银行卡号必须全为数字");
+            return false;
+        }
+        if (!/(^[1-9]([0-9]+)?(\.[0-9]{1,2})?$)|(^(0)$)|(^[0-9]\.[0-9]([0-9])?$)/.test(vm.info.money)) {
+            toast('请输入正整数金额');
+            return false;
+        }
+        if ((parseInt(vm.info.money * 100) - parseInt(vm.hint * 100)) > 0) {
+            toast('提现金额超出可用额度');
+            return false;
+        }
+        return true;
+    }
+</script>
+</html>

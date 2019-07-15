@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta content="telephone=no,email=no" name="format-detection">
+    <!--禁止自动识别电话号码和邮箱-->
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <!--苹果手机：会删除默认的工具栏和菜单栏，网站开启对web app程序的支持-->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+    <!--苹果手机：在web app应用下状态条（屏幕顶部条）的颜色,默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）。-->
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <!--苹果手机：如果把一个web app添加到了主屏幕中，那么从主屏幕中打开这个web app则全屏显示-->
+    <link rel="stylesheet" type="text/css" href="css/UploadingGoods.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/layer.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+    <script src="js/service.js"></script>
+    <title>修改商品</title>
+</head>
+<body>
+<div id="vueData">
+    <header>
+        <div class="title_header dis_flex">
+            <div class="dis_flex" @click="goBack">
+                <img src="img/return_2.png">
+            </div>
+            <div>
+                <span>{{titleName}}</span>
+            </div>
+            <div></div>
+        </div>
+    </header>
+    <div class="body">
+        <form action="">
+            <div class="div_inp">
+                <label for="name">名称：</label>
+                <input type="text" id="name" v-model="commodity.name">
+            </div>
+            <div class="pic_div" @click="onLoadImg">
+                <img v-if="storeImg" :src="storeImg">
+                <span v-else>添加图片</span>
+            </div>
+            <div class="btn-group">
+                <span>类别：</span>
+                <select v-model="categoryIndex" @change="selCategory">
+                    <option value="-1">请选择</option>
+                    <option v-for="(item,index) in classify" :value="index">{{item.category_name}}</option>
+                </select>
+            </div>
+            <div class="div_inp">
+                <label for="price">价格：</label>
+                <input type="text" id="price" v-model="commodity.price">
+            </div>
+            <div class="div_inp">
+                <label for="stock">库存：</label>
+                <input type="text" id="stock" v-model="commodity.stock">
+            </div>
+            <div class="foot_inp">
+                <input type="button" v-model="submitName" @click="submitDone">
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+    let localStore = JSON.parse(localStorage.localStore);
+    let commodityId = GetQueryString('commodityId');
+    let href = location.href.split('#')[0];
+    let vm = new Vue({
+        el: '#vueData',
+        data: {
+            storeImg: null,
+            avatarUrl: null,
+            classify: [],
+            commodity: {
+                picture: ''
+            },
+            titleName: '修改商品',
+            submitName: '保存修改',
+            categoryIndex: 0
+        }, mounted: function () {
+            if (!commodityId) {
+                this.categoryIndex = -1;
+            }
+        }, watch: {
+            'avatarUrl': function (res) {
+                wx.uploadImage({
+                    localId: res, // 需要上传的图片的本地ID，由chooseImage接口获得
+                    success: function (res) {
+                        vm.commodity.picture = res.serverId; // 返回图片的服务器端ID
+                    }
+                })
+            }
+        }, methods: {
+            selCategory(e) {
+                let index = e.target.value;
+                if (index > -1) {
+                    vm.commodity.categoryId = vm.classify[index].id;
+                }
+            },
+            goBack() {
+                history.back();
+            }, submitDone() {
+                let commodity = {
+                    token: localStore.token,
+                    name: vm.commodity.name,
+                    picture: vm.commodity.picture,
+                    price: vm.commodity.price,
+                    stock: vm.commodity.stock,
+                    categoryId: vm.commodity.categoryId
+                };
+                if (commodityId) {
+                    commodity.commodityId = commodityId;
+                    excuteSubmit('/shanduonewretail/jcommodity/updatecommodity', commodity);
+                } else {
+                    excuteSubmit('/shanduonewretail/jcommodity/insertcommodity', commodity);
+                }
+            }, onLoadImg() {
+                wx.chooseImage({
+                    count: 1,
+                    sizeType: ['compressed'],
+                    success: function (res) {
+                        vm.avatarUrl = res.localIds[0];
+                        let u = navigator.userAgent;//手机类型android或ios
+                        //if (u.indexOf('Android') > -1 || u.indexOf('Linux') > -1) {//安卓手机
+                        if (u.indexOf('iPhone') > -1) {
+                            wx.getLocalImgData({
+                                localId: res.localIds[0], // 图片的localID
+                                success: function (res) {
+                                    vm.storeImg = res.localData;
+                                }
+                            });
+                        } else {
+                            vm.storeImg = res.localIds[0];
+                        }
+                    }
+                });
+            }
+        }
+    });
+    function excuteSubmit(url, obj) {
+        $.ajax({
+            url: url,
+            data: obj,
+            success: function (res) {
+                if (res.success) {
+                    toast('操作成功');
+                    setTimeout(function () {
+                        location.href = 'Commoditysetting.html';
+                    }, 1000);
+                }
+            }
+        });
+    }
+    $(function () {
+        if (commodityId) {
+            $.getJSON('/shanduonewretail/jcommodity/selectonecommodity', {
+                token: localStore.token,
+                commodityId: commodityId
+            }, function (res) {
+                if (res.success) {
+                    vm.commodity = res.result;
+                    vm.storeImg = '/yapingzh/picture/' + vm.commodity.picture;
+                    getCommodityAllType(localStore.token, function (res) {
+                        vm.classify = res.result;
+                        $.each(vm.classify, function (i, item) {
+                            if (item.id === vm.commodity.categoryId) {
+                                vm.categoryIndex = i;
+                                return false;
+                            }
+                        })
+                    });
+                }
+            });
+        } else {
+            document.title = '添加商品';
+            vm.titleName = '添加商品';
+            vm.submitName = '添加上传';
+            getCommodityAllType(localStore.token, function (res) {
+                vm.classify = res.result;
+            });
+        }
+        init_wx_js_sdk(href, function (result) {
+            //初始化接口环境
+            wx.config({
+                appId: result.appid,
+                timestamp: result.timestamp,
+                nonceStr: result.noncestr,
+                signature: result.signature,
+                jsApiList: ['chooseImage', 'uploadImage', 'hideMenuItems']
+            });
+            wx.ready(function () {
+                wx.hideMenuItems({
+                    menuList: ['menuItem:copyUrl', 'menuItem:share:qq', 'menuItem:share:QZone', 'menuItem:openWithQQBrowser', 'menuItem:openWithSafari', 'menuItem:share:email', 'menuItem:readMode']
+                });
+            });
+        });
+    });
+</script>
+</html>

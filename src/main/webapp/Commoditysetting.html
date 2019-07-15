@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta content="telephone=no,email=no" name="format-detection">
+    <!--禁止自动识别电话号码和邮箱-->
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <!--苹果手机：会删除默认的工具栏和菜单栏，网站开启对web app程序的支持-->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+    <!--苹果手机：在web app应用下状态条（屏幕顶部条）的颜色,默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）。-->
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <!--苹果手机：如果把一个web app添加到了主屏幕中，那么从主屏幕中打开这个web app则全屏显示-->
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/shop.css">
+    <link rel="stylesheet" href="css/Commoditysetting.css">
+    <link rel="stylesheet" type="text/css" href="css/mescroll.min.css">
+    <script src="js/jquery-3.3.1.js"></script>
+    <script src="js/layer.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/service.js"></script>
+    <title>商品设置</title>
+</head>
+<body>
+<div id="vueData" class="mescroll">
+    <div class="body">
+        <article id="menu">
+            <div class="swiper-container">
+                <div class="dis_flex">
+                    <div>
+                        <div class="swiper-container-div">
+                            <!--类别名-->
+                            <ul class="swiper-container-ul" id="OneTab">
+                                <!--类别名1切换-->
+                                <li v-for="(item,index) in classify"
+                                    :class="index==0?'swiper-container-ul-li active':'swiper-container-ul-li'">
+                                    <a href="#" data-toggle="tab"
+                                       @click.prevent="changer(item.id)">{{item.category_name}}</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="swiper-wrapper tab-content">
+                        <!--类别1-->
+                        <div class="swiper-slide tab-pane fade in active" id="One1">
+                            <div class="content">
+                                <div class="right">
+                                    <ul>
+                                        <!--类别商品-->
+                                        <li v-for="(commodity,index) in commodityArray">
+                                            <div>
+                                                <div class="item">
+                                                    <div class="item-left" @click="onclick1(index)">
+                                                        <div class="item-img">
+                                                            <div class="dynamic_pic">
+                                                                <div :style="commodity.picture.myStyle"></div>
+                                                                <img class="dynamic_pic_img dis_none"
+                                                                     :src="commodity.picture.imgPath" alt="">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="item-right dis_flex">
+                                                        <div class="title" @click="onclick2(index)">{{commodity.name}}
+                                                        </div>
+                                                        <div class="subtitle" @click="onclick2(index)">
+                                                            库存:{{commodity.stock}}
+                                                        </div>
+                                                        <div class="number dis_flex">
+                                                            <span class="price" @click="onclick3(index)"><span class="col_hui">单价：</span>￥{{commodity.price}}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="right_top_pot dis_flex">
+                                                        <div>
+                                                            <a href="javascript:" @click="commodityVisible(index)">
+                                                                <span v-if="commodity.visible==1">下架</span>
+                                                                <span v-else>上架</span>
+                                                            </a>
+                                                        </div>
+                                                        <div>
+                                                            <a href="javascript:"
+                                                               @click="gotoEditCommodityView(commodity.id)">修改</a>
+                                                        </div>
+                                                        <div>
+                                                            <a href="javascript:"
+                                                               @click="deleteCommodity(index,commodity.id)">删除</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div style="clear:both"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--商品详情-->
+            <div id="outerdiv" class="dis_flex" v-if="currentCommodity">
+                <div class="dis_flex">
+                    <img id="bigimg" :src="currentCommodity.picture.imgPath"/>
+                    <div class="title">{{currentCommodity.name}}</div>
+                    <div class="subtitle">库存:{{currentCommodity.stock}}</div>
+                    <div class="number dis_flex">
+                        <span class="price">￥{{currentCommodity.price}}</span>
+                        <p class="plan dis_flex">
+
+                        </p>
+                    </div>
+                </div>
+                <img src="img/pic_off.png" alt="" @click="closeDiglog">
+            </div>
+        </article>
+    </div>
+    <footer>
+        <div class="dis_flex">
+            <a href="javascript:" @click="gotoWarehouseView">去仓库</a>
+            <a href="javascript:" @click="addCommodityView">上传商品</a>
+        </div>
+    </footer>
+</div>
+</body>
+<script src="js/mescroll.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script type="text/javascript">
+    let localStore = JSON.parse(localStorage.localStore);
+    let pageIndex = 1, pageCount = 20, totalPage = 0, itemIndex = 0, currentClassifyid;
+    var vm = new Vue({
+        el: '#vueData',
+        data: {
+            classify: [],
+            commodityArray: [],
+            currentCommodity: null,
+            mescroll: null
+        },
+        mounted: function () {
+            let that = this;
+            that.mescroll = new MeScroll("vueData", {
+                up: {
+                    callback: that.upCallback,
+                    auto: false,
+                    noMoreSize: 20
+                }, down: {
+                    callback: that.downCallback,
+                    auto: false
+                }
+            });
+            //图片放大
+            $('#outerdiv').hide();
+        },
+        methods: {
+            downCallback() {
+                let that = this;
+                emptyData();
+                adapter(currentClassifyid, function () {
+                    that.mescroll.endByPage(pageCount, totalPage);
+                }, function () {
+                    that.mescroll.endErr();
+                });
+            },
+            upCallback() {
+                let that = this;
+                if (totalPage > pageIndex) {
+                    pageIndex++;
+                    adapter(currentClassifyid, function () {
+                        that.mescroll.endByPage(pageCount, totalPage);
+                    }, function () {
+                        that.mescroll.endErr();
+                    });
+                } else {
+                    that.mescroll.endErr();
+                }
+            },
+            imgShow() {
+                $('#outerdiv').fadeIn("fast");
+            },
+            closeDiglog() {
+                $('#outerdiv').fadeOut("fast");
+            },
+            changer(classifyId) {
+                let selectId = $(event.currentTarget).parent().index();
+                if (itemIndex === selectId) {
+                    return;
+                }
+                itemIndex = selectId;
+                emptyData();
+                currentClassifyid = classifyId;
+                $(event.currentTarget).parent().addClass('active').siblings('li').removeClass('active');
+                adapter(classifyId);
+            },
+            onclick1(index) {
+                vm.currentCommodity = vm.commodityArray[index];
+                vm.imgShow();
+            },
+            onclick2(index) {
+                vm.currentCommodity = vm.commodityArray[index];
+                vm.imgShow();
+            },
+            onclick3(index) {
+                vm.currentCommodity = vm.commodityArray[index];
+                vm.imgShow()
+            }, gotoWarehouseView() {
+                location.href = 'Warehouse.html';
+            }, addCommodityView() {
+                location.href = 'UploadingGoods.html'
+            }, commodityVisible(key) {
+                let commodity = vm.commodityArray[key];
+                layer.open({
+                    content: commodity.visible === 1 ? "下架这个商品?" : "上架这个商品?"
+                    , btn: ['是的', '取消']
+                    , yes: function (index) {
+                        $.getJSON('/shanduonewretail/jcommodity/updatecommodityvisible', {
+                            token: localStore.token,
+                            commodityId: commodity.id,
+                            visible: commodity.visible === 1 ? 0 : 1
+                        }, function (result) {
+                            if (result.success) {
+                                vm.commodityArray[key].visible = commodity.visible === 1 ? 0 : 1;
+                                toast('操作成功');
+                            } else {
+                                toast('操作失败');
+                            }
+                        });
+                        layer.close(index);
+                    }
+                });
+            }, gotoEditCommodityView(commodityId) {
+                location.href = 'UploadingGoods.html?commodityId=' + commodityId;
+            }, deleteCommodity(key, commodityId) {
+                layer.open({
+                    content: "删除这个商品吗？"
+                    , btn: ['是的', '取消']
+                    , yes: function (index) {
+                        $.getJSON('/shanduonewretail/jcommodity/deletecommodity', {
+                            token: localStore.token,
+                            commodityId: commodityId
+                        }, function (result) {
+                            if (result.success) {
+                                let oldData = vm.commodityArray;
+                                oldData.splice(key, 1);
+                                vm.commodityArray = oldData;
+                                toast('操作成功');
+                                if (vm.commodityArray.length === 0) {
+                                    location.reload();
+                                }
+                            } else {
+                                toast('操作失败');
+                            }
+                        });
+                        layer.close(index);
+                    }
+                });
+            }
+        }
+    });
+    $(function () {
+        getStoreClassify(localStore.token, 2, function (result) {
+            vm.classify = result;
+            currentClassifyid = vm.classify[0].id;
+            adapter(currentClassifyid);
+        });
+    });
+
+    function adapter(categoryId, cbOK, cbErr) {
+        getGoods(localStore.token, categoryId, 2, pageIndex, pageCount, function (res) {
+            let newData = res.commodityInfoList;
+            for (let i in newData) {
+                newData[i].picture = {
+                    myStyle: {backgroundImage: "url('/yapingzh/picture/" + newData[i].picture + "')"},
+                    imgPath: '/yapingzh/picture/' + newData[i].picture
+                };
+            }
+            vm.commodityArray = vm.commodityArray.concat(newData);
+            totalPage = res.totalPage;
+            cbOK && cbOK();
+        }, function () {
+            cbErr && cbErr();
+        });
+    }
+
+    function emptyData() {
+        let ary = vm.commodityArray;
+        ary.splice(0, ary.length);
+        vm.commodityArray = ary;
+        totalPage = 0;
+        pageIndex = 1;
+    }
+</script>
+</html>

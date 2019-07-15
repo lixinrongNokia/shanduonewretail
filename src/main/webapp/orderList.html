@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"/>
+    <meta content="telephone=no,email=no" name="format-detection">
+    <!--禁止自动识别电话号码和邮箱-->
+    <meta content="yes" name="apple-mobile-web-app-capable">
+    <!--苹果手机：会删除默认的工具栏和菜单栏，网站开启对web app程序的支持-->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+    <!--苹果手机：在web app应用下状态条（屏幕顶部条）的颜色,默认值为default（白色），可以定为black（黑色）和black-translucent（灰色半透明）。-->
+    <meta name="apple-touch-fullscreen" content="yes"/>
+    <!--苹果手机：如果把一个web app添加到了主屏幕中，那么从主屏幕中打开这个web app则全屏显示-->
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="css/orderList.css">
+    <link rel="stylesheet" type="text/css" href="css/mescroll.min.css">
+    <script type="text/javascript" src="js/jquery-3.3.1.js"></script>
+    <script type="text/javascript" src="js/layer.js"></script>
+    <script type="text/javascript" src="js/utils.js"></script>
+    <title>订单管理</title>
+</head>
+<body>
+<div id="vueData" class="mescroll">
+    <header>
+        <div class="title_header dis_flex">
+            <div @click="goBack">
+                <img src="img/return_2.png" alt="">
+            </div>
+            <div>
+                <span>订单管理</span>
+            </div>
+            <div></div>
+        </div>
+    </header>
+    <article id="menu">
+        <div class="swiper-container">
+            <div class="swiper-container-div">
+                <ul class="swiper-container-ul dis_flex">
+                    <li class="swiper-container-ul-li actives">
+                        <a href="javascript:" class="dis_inli">待确认</a>
+                    </li>
+                    <li class="swiper-container-ul-li">
+                        <a href="javascript:" class="dis_inli">待配送</a>
+                    </li>
+                    <li class="swiper-container-ul-li">
+                        <a href="javascript:" class="dis_inli">已完成</a>
+                    </li>
+                    <li class="swiper-container-ul-li">
+                        <a href="javascript:" class="dis_inli">已退款</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content">
+            <!--待确认-->
+            <div class="swiper-wrapper">
+                <div class="swiper-slide">
+                    <div class="frame">
+                        <!--没有订单时显示-->
+                        <span class="dis_inli" v-if="ds[currentTab].arrayResult.length==0">没有订单</span>
+                        <ul :style="{maxHeight: winHeight+'px'}" v-else>
+                            <li class="item" v-for="(item,key) in ds[currentTab].arrayResult">
+                                <div class="item-right">
+                                    <div class="title price">订单ID：{{item.id}}</div>
+                                    <div class="subtitle">
+                                        <div v-for="detail in item.details">
+                                            <div class="dis_flex">
+                                                <span>{{detail.commodityName}}</span>
+                                                <span>x{{detail.commodityNumber}}</span>
+                                            </div>
+                                            <div>
+                                                <span>售价:</span>
+                                                <span>{{detail.price}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="subtitle_div">
+                                        <span>合计:</span>
+                                        <span>{{item.totalPrice}}</span>
+                                    </div>
+                                    <div class="bg_div_hui">
+                                        <div>
+                                            <span>收货人：</span>
+                                            <span>{{item.userName}}</span>
+                                        </div>
+                                        <div>
+                                            <span>收货地址：</span>
+                                            <span>{{item.userAddress}}</span>
+                                        </div>
+                                        <div>
+                                            <span>下单时间：</span>
+                                            <span>{{item.gmtCreate}}</span>
+                                        </div>
+                                        <div>
+                                            <span>联系电话：</span>
+                                            <span>{{item.userPhone}}</span>
+                                        </div>
+                                        <div>
+                                            <span>备注：</span>
+                                            <span>{{item.remarks}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="number dis_flex">
+                                        <a href="javascript:"
+                                           @click="exctueMethod(key,'/shanduonewretail/jorder/receivingorder', item.id )">接单</a>
+                                        <a href="javascript:"
+                                           @click="exctueMethod(key,'/shanduonewretail/jorder/cancelorder', item.id )">拒绝</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!--待配送-->
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" style="display:none;">
+                    <div class="frame">
+                        <!--没有订单时显示-->
+                        <span class="dis_inli" v-if="ds[currentTab].arrayResult.length==0">没有订单</span>
+                        <ul :style="{maxHeight: winHeight+'px'}" v-else>
+                            <li class="item" v-for="(item,key) in ds[currentTab].arrayResult">
+                                <div class="item-right">
+                                    <div class="title price">订单ID：{{item.id}}</div>
+                                    <div class="subtitle">
+                                        <div v-for="detail in item.details">
+                                            <div class="dis_flex">
+                                                <span>{{detail.commodityName}}</span>
+                                                <span>x{{detail.commodityNumber}}</span>
+                                            </div>
+                                            <div>
+                                                <span>售价:</span>
+                                                <span>{{detail.price}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="subtitle_div">
+                                        <span>合计:</span>
+                                        <span>{{item.totalPrice}}</span>
+                                    </div>
+                                    <div class="bg_div_hui">
+                                        <div>
+                                            <span>收货人：</span>
+                                            <span>{{item.userName}}</span>
+                                        </div>
+                                        <div>
+                                            <span>收货地址：</span>
+                                            <span>{{item.userAddress}}</span>
+                                        </div>
+                                        <div>
+                                            <span>下单时间：</span>
+                                            <span>{{item.gmtCreate}}</span>
+                                        </div>
+                                        <div>
+                                            <span>联系电话：</span>
+                                            <span>{{item.userPhone}}</span>
+                                        </div>
+                                        <div>
+                                            <span>备注：</span>
+                                            <span>{{item.remarks}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="number dis_flex">
+                                        <a href="javascript:"
+                                           @click="exctueMethod(key,'/shanduonewretail/jorder/finishorder', item.id )">配送完成</a>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!--已完成-->
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" style="display:none;">
+                    <div class="frame">
+                        <!--没有订单时显示-->
+                        <span class="dis_inli" v-if="ds[currentTab].arrayResult.length==0">没有订单</span>
+                        <ul :style="{maxHeight: winHeight+'px'}" v-else>
+                            <li class="item" v-for="(item,key) in ds[currentTab].arrayResult">
+                                <div class="item-right">
+                                    <div class="title price">订单ID：{{item.id}}</div>
+                                    <div class="subtitle">
+                                        <div v-for="detail in item.details">
+                                            <div class="dis_flex">
+                                                <span>{{detail.commodityName}}</span>
+                                                <span>x{{detail.commodityNumber}}</span>
+                                            </div>
+                                            <div>
+                                                <span>售价:</span>
+                                                <span>{{detail.price}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="subtitle_div">
+                                        <span>合计:</span>
+                                        <span>{{item.totalPrice}}</span>
+                                    </div>
+                                    <div class="bg_div_hui">
+                                        <div>
+                                            <span>收货人：</span>
+                                            <span>{{item.userName}}</span>
+                                        </div>
+                                        <div>
+                                            <span>收货地址：</span>
+                                            <span>{{item.userAddress}}</span>
+                                        </div>
+                                        <div>
+                                            <span>下单时间：</span>
+                                            <span>{{item.gmtCreate}}</span>
+                                        </div>
+                                        <div>
+                                            <span>联系电话：</span>
+                                            <span>{{item.userPhone}}</span>
+                                        </div>
+                                        <div>
+                                            <span>备注：</span>
+                                            <span>{{item.remarks}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="number dis_flex">
+                                        <!--<a href="javascript:" @click="exctueMethod(key,'/yapingzh/delOrder.do', order.id )">删除</a>-->
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!--已退款-->
+            <div class="swiper-wrapper">
+                <div class="swiper-slide" style="display:none;">
+                    <div class="frame">
+                        <!--没有订单时显示-->
+                        <span class="dis_inli" v-if="ds[currentTab].arrayResult.length==0">没有订单</span>
+                        <ul :style="{maxHeight: winHeight+'px'}" v-else>
+                            <li class="item" v-for="(item,key) in ds[currentTab].arrayResult">
+                                <div class="item-right">
+                                    <div class="title price">订单ID：{{item.id}}</div>
+                                    <div class="subtitle">
+                                        <div v-for="detail in item.details">
+                                            <div class="dis_flex">
+                                                <span>{{detail.commodityName}}</span>
+                                                <span>x{{detail.commodityNumber}}</span>
+                                            </div>
+                                            <div>
+                                                <span>售价:</span>
+                                                <span>{{detail.price}}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="subtitle_div">
+                                        <span>合计:</span>
+                                        <span>{{item.totalPrice}}</span>
+                                    </div>
+                                    <div class="bg_div_hui">
+                                        <div>
+                                            <span>收货人：</span>
+                                            <span>{{item.userName}}</span>
+                                        </div>
+                                        <div>
+                                            <span>收货地址：</span>
+                                            <span>{{item.userAddress}}</span>
+                                        </div>
+                                        <div>
+                                            <span>下单时间：</span>
+                                            <span>{{item.gmtCreate}}</span>
+                                        </div>
+                                        <div>
+                                            <span>联系电话：</span>
+                                            <span>{{item.userPhone}}</span>
+                                        </div>
+                                        <div>
+                                            <span>备注：</span>
+                                            <span>{{item.remarks}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="number dis_flex">
+                                        <!--<a href="javascript:" @click="exctueMethod(key,'/yapingzh/delOrder.do', order.id )">删除</a>-->
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</div>
+</body>
+<script src="js/mescroll.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script type="text/javascript">
+    let localStore = localStorage.localStore, currentPage = 1, totalPage = 0, pageSize = 20;
+    let vm = new Vue({
+        el: '#vueData',
+        data: {
+            //获取屏幕分辨率高度
+            winHeight: null,
+            currentTab: 0,
+            ds: [{
+                arrayResult: [],
+                state: 2
+            }, {
+                arrayResult: [],
+                state: 3
+            }, {
+                arrayResult: [],
+                state: 4
+            }, {
+                arrayResult: [],
+                state: 6
+            }],
+            mescroll: null
+        },
+        mounted: function () {
+            //获取屏幕分辨率高度
+            let that = this;
+            that.winHeight = window.screen.height - 100;
+            that.mescroll = new MeScroll("vueData", { //请至少在vue的mounted生命周期初始化mescroll,以确保您配置的id能够被找到
+                up: {
+                    callback: that.upCallback, //上拉回调
+                    auto: false
+                }, down: {
+                    callback: that.downCallback,
+                    auto: false
+                }
+            });
+
+            $('.swiper-container-ul-li').on('click', function () {
+                let selectIndex = $(event.currentTarget).index();
+                if (vm.currentTab === selectIndex) {
+                    return;
+                }
+                vm.currentTab = selectIndex;
+                emptyData();
+                $(event.currentTarget).addClass('actives').siblings('li').removeClass('actives');
+                $('.swiper-wrapper').eq(vm.currentTab).show().children().show().parent().siblings('.swiper-wrapper').hide();
+                loadData();
+            });
+        },
+        methods: {
+            upCallback() {
+                let that = this;
+                if (totalPage > currentPage) {
+                    currentPage += 1;
+                    loadData(function () {
+                        that.mescroll.endByPage(pageSize, totalPage);
+                    }, function () {
+                        that.mescroll.endErr();
+                    });
+                } else {
+                    that.mescroll.endErr();
+                }
+            }, downCallback() {
+                let that = this;
+                emptyData();
+                loadData(function () {
+                    that.mescroll.endByPage(pageSize, totalPage);
+                }, function () {
+                    that.mescroll.endErr();
+                });
+            },
+            goBack() {
+                if (document.referrer === '' || document.referrer.indexOf('shanduonewretail') === -1) {
+                    location.href = 'Administration.html';
+                } else {
+                    history.back();
+                }
+            }, exctueMethod(key, url, orderId) {
+                layer.open({
+                    content: "执行这个操作？"
+                    , btn: ['是的', '取消']
+                    , yes: function (index) {
+                        $.getJSON(url, {"orderId": orderId, "token": localStore.token}, function (result) {
+                            if (result.success) {
+                                let oldData = vm.ds[vm.currentTab].arrayResult;
+                                oldData.splice(key, 1);
+                                vm.ds[vm.currentTab].arrayResult = oldData;
+                                toast(result.result);
+                            } else {
+                                toast('操作失败');
+                            }
+                        });
+                        layer.close(index);
+                    }
+                });
+            }
+        }
+    });
+    $(function () {
+        if (!localStore) {
+            location.href = 'login.html';
+            return;
+        }
+        localStore = JSON.parse(localStore);
+        loadData();
+    });
+
+    function loadData(cbOk, cbErr) {
+        $.ajax({
+            type: 'GET',
+            url: '/shanduonewretail/jorder/orderList',
+            data: {
+                token: localStore.token,
+                state: vm.ds[vm.currentTab].state,
+                startDate: '',
+                endDate: '',
+                page: currentPage,
+                pageSize: pageSize
+            },
+            dataType: 'json',
+            success: function (res) {
+                if (res.success) {
+                    if (res.data.length > 0) {
+                        $.each(res.data, function (i, item) {
+                            res.data[i].gmtCreate = getLocalTime(item.gmtCreate);
+                        });
+                        vm.ds[vm.currentTab].arrayResult = vm.ds[vm.currentTab].arrayResult.concat(res.data);
+                        totalPage = res.totalPage;
+                    }
+                } else {
+                    toast(res.errCodeDes);
+                }
+                cbOk && cbOk();
+            }, error: function () {
+                cbErr && cbErr();
+            }
+        });
+    }
+
+    function emptyData() {
+        let ary = vm.ds[vm.currentTab].arrayResult;
+        ary.splice(0, ary.length);
+        vm.ds[vm.currentTab].arrayResult = ary;
+        currentPage = 1;
+        totalPage = 0;
+    }
+</script>
+</html>
