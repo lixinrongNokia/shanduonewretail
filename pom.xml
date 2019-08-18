@@ -7,6 +7,12 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>shanduo Maven Webapp</name>
     <url>http://maven.apache.org</url>
+    <repositories>
+		<repository>
+			<id>xingePush</id>
+			<url>https://raw.githubusercontent.com/xingePush/maven-repository/snapshot/</url>
+		</repository>
+	</repositories>
     <properties>
         <env>dev</env>
         <spring.version>3.1.1.RELEASE</spring.version>
@@ -390,8 +396,8 @@
         </dependency>
         <!-- 腾讯信鸽推送jar -->
 		<dependency>
-			<groupId>com.tencent.xinge</groupId>
-			<artifactId>Xg-Push-SDK-JAVA</artifactId>
+			<groupId>com.github.xingePush</groupId>
+			<artifactId>xinge</artifactId>
 			<version>1.1.8</version>
 		</dependency>
     </dependencies>
